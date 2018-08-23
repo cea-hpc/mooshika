@@ -213,6 +213,17 @@ static inline int msk_cond_timedwait(int debug,
 
 
 /**
+ * msk_fork_init: wrapper around ibv_fork_init()
+ * Initialize libibverbs to support fork().
+ *
+ * @return 0 on success, the value of errno on failure
+ */
+int msk_fork_init(void)
+{
+	return ibv_fork_init();
+}
+
+/**
  * msk_getpd: helper function to get the right pd for a given trans
  *
  * @param trans [IN] the connection handle
