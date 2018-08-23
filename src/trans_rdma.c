@@ -1186,7 +1186,8 @@ static void *msk_cq_thread(void *arg) {
 			msk_mutex_lock(trans->debug & MSK_DEBUG_CM_LOCKS, &trans->cm_lock);
 			if (trans->state >= MSK_CLOSING) { /* CLOSING, CLOSED, ERROR */
 				// closing trans, skip this, will be done on flush
-				msk_cq_delfd(trans);
+				if (trans->comp_channel)
+					msk_cq_delfd(trans);
 				msk_mutex_unlock(trans->debug & MSK_DEBUG_CM_LOCKS, &trans->cm_lock);
 				continue;
 			}
