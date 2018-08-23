@@ -19,6 +19,11 @@ AC_SEARCH_LIBS([rdma_create_id], [rdmacm], [], [
 ])
 AC_CHECK_HEADERS([rdma/rdma_cma.h],[], [AC_MSG_ERROR(missing rdma headers)])
 
+# Check if RDMA_CM Libs supports rdma_lib_reset()
+AC_CHECK_FUNC([rdma_lib_reset], [
+    AC_DEFINE([HAVE_RDMA_LIB_RESET], [1], [Define if rdma_lib_reset() is supported.])
+])
+
 AC_DEFINE( [VERSION_COMMENT], ["libmooshika and examples"], [No Comment])
 
 # Git latest commit

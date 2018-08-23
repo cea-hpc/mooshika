@@ -226,6 +226,7 @@ static inline int msk_wait_write(msk_trans_t *trans, msk_data_t *data, msk_rloc_
 
 int msk_init(msk_trans_t **ptrans, msk_trans_attr_t *attr);
 
+void msk_lib_reset(void);
 int msk_fork_init(void);
 
 // server specific:

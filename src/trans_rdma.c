@@ -175,6 +175,25 @@ void __attribute__ ((destructor)) msk_internals_fini(void) {
 	}
 }
 
+/**
+ * Reset global state.
+ * Should (only) be called to reset global data in child process after a fork.
+ */
+void msk_lib_reset(void)
+{
+	/* Brutal re-initialization of global state */
+	memset(msk_global_state, 0, sizeof(*msk_global_state));
+
+	msk_global_state->run_threads = 0;
+	if (pthread_mutex_init(&msk_global_state->lock, NULL))
+		ERROR_LOG("pthread_mutex_init failed?!");
+
+#ifdef HAVE_RDMA_LIB_RESET
+	/* Reset librdmacm (Mellanox MOFED interface) */
+	rdma_lib_reset();
+#endif
+}
+
 /* forward declarations */
 
 static void *msk_cq_thread(void *arg);
