@@ -191,6 +191,19 @@ void msk_lib_reset(void)
 	if (msk_global_state->stats_epollfd != 0)
 		close(msk_global_state->stats_epollfd);
 
+	/* Free worker pool resources */
+	if (msk_global_state->worker_pool.w_efd != 0)
+		close(msk_global_state->worker_pool.w_efd);
+
+	if (msk_global_state->worker_pool.m_efd != 0)
+		close(msk_global_state->worker_pool.m_efd);
+
+	if (msk_global_state->worker_pool.thrids)
+		free(msk_global_state->worker_pool.thrids);
+
+	if (msk_global_state->worker_pool.wd_queue)
+		free(msk_global_state->worker_pool.wd_queue);
+
 	/* Brutal re-initialization of global state */
 	memset(msk_global_state, 0, sizeof(*msk_global_state));
 
