@@ -181,6 +181,16 @@ void __attribute__ ((destructor)) msk_internals_fini(void) {
  */
 void msk_lib_reset(void)
 {
+	/* Close epoll fd's */
+	if (msk_global_state->cm_epollfd != 0)
+		close(msk_global_state->cm_epollfd);
+
+	if (msk_global_state->cq_epollfd != 0)
+		close(msk_global_state->cq_epollfd);
+
+	if (msk_global_state->stats_epollfd != 0)
+		close(msk_global_state->stats_epollfd);
+
 	/* Brutal re-initialization of global state */
 	memset(msk_global_state, 0, sizeof(*msk_global_state));
 
