@@ -1211,7 +1211,8 @@ static void *msk_cq_thread(void *arg) {
 			msk_mutex_lock(trans->debug & MSK_DEBUG_CM_LOCKS, &trans->cm_lock);
 			if (trans->state >= MSK_CLOSING) { /* CLOSING, CLOSED, ERROR */
 				// closing trans, skip this, will be done on flush
-				msk_cq_delfd(trans);
+				if (trans->comp_channel)
+					msk_cq_delfd(trans);
 				msk_mutex_unlock(trans->debug & MSK_DEBUG_CM_LOCKS, &trans->cm_lock);
 				continue;
 			}
@@ -1358,6 +1359,7 @@ static void msk_destroy_qp(struct msk_trans *trans) {
  */
 void msk_destroy_trans(struct msk_trans **ptrans) {
 	struct msk_trans *trans = *ptrans;
+	int ret = 0;
 
 	if (trans) {
 		trans->destroy_on_disconnect = 0;
@@ -1366,8 +1368,13 @@ void msk_destroy_trans(struct msk_trans **ptrans) {
 			if (trans->state != MSK_CLOSED && trans->state != MSK_LISTENING && trans->state != MSK_ERROR)
 				trans->state = MSK_CLOSING;
 
-			if (trans->cm_id && trans->cm_id->verbs)
-				rdma_disconnect(trans->cm_id);
+			if (trans->cm_id && trans->cm_id->verbs) {
+				ret = rdma_disconnect(trans->cm_id);
+				if (ret) {
+					ERROR_LOG("rdma_disconnect() failed: %s", strerror(errno));
+					return;
+				}
+			}
 
 			while (trans->state != MSK_CLOSED && trans->state != MSK_LISTENING && trans->state != MSK_ERROR) {
 				INFO_LOG(trans->debug & MSK_DEBUG_SETUP, "we're not closed yet, waiting for disconnect_event");
