@@ -177,6 +177,48 @@ void __attribute__ ((destructor)) msk_internals_fini(void) {
 	}
 }
 
+/**
+ * Reset global state.
+ * Should (only) be called to reset global data in child process after a fork.
+ */
+void msk_lib_reset(void)
+{
+	/* Close epoll fd's */
+	if (msk_global_state->cm_epollfd != 0)
+		close(msk_global_state->cm_epollfd);
+
+	if (msk_global_state->cq_epollfd != 0)
+		close(msk_global_state->cq_epollfd);
+
+	if (msk_global_state->stats_epollfd != 0)
+		close(msk_global_state->stats_epollfd);
+
+	/* Free worker pool resources */
+	if (msk_global_state->worker_pool.w_efd != 0)
+		close(msk_global_state->worker_pool.w_efd);
+
+	if (msk_global_state->worker_pool.m_efd != 0)
+		close(msk_global_state->worker_pool.m_efd);
+
+	if (msk_global_state->worker_pool.thrids)
+		free(msk_global_state->worker_pool.thrids);
+
+	if (msk_global_state->worker_pool.wd_queue)
+		free(msk_global_state->worker_pool.wd_queue);
+
+	/* Brutal re-initialization of global state */
+	memset(msk_global_state, 0, sizeof(*msk_global_state));
+
+	msk_global_state->run_threads = 0;
+	if (pthread_mutex_init(&msk_global_state->lock, NULL))
+		ERROR_LOG("pthread_mutex_init failed?!");
+
+#ifdef HAVE_RDMA_LIB_RESET
+	/* Reset librdmacm (Mellanox MOFED interface) */
+	rdma_lib_reset();
+#endif
+}
+
 /* forward declarations */
 
 static void *msk_cq_thread(void *arg);
@@ -213,6 +255,17 @@ static inline int msk_cond_timedwait(int debug,
 	return rc;
 }
 
+
+/**
+ * msk_fork_init: wrapper around ibv_fork_init()
+ * Initialize libibverbs to support fork().
+ *
+ * @return 0 on success, the value of errno on failure
+ */
+int msk_fork_init(void)
+{
+	return ibv_fork_init();
+}
 
 /**
  * msk_getpd: helper function to get the right pd for a given trans
